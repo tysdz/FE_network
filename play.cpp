@@ -30,6 +30,12 @@ public:
         return rotating;
     }
 
+    bool checkCollision(const Boat& other) const {
+        sf::FloatRect thisBounds = shape.getGlobalBounds();
+        sf::FloatRect otherBounds = other.shape.getGlobalBounds();
+        return thisBounds.intersects(otherBounds);
+    }
+
     void draw(sf::RenderWindow& window) const {
         sf::RectangleShape drawableShape = shape;
         if (isRotating()) {
@@ -133,19 +139,38 @@ int main() {
     return 0;
 }
 
+bool checkCollisionWithOtherBoats(const std::vector<Boat>& boats, int selectedIndex, int dx, int dy) {
+    const Boat& selectedBoat = boats[selectedIndex];
+    for (size_t i = 0; i < boats.size(); ++i) {
+        if (i != selectedIndex) {
+            const Boat& otherBoat = boats[i];
+            Boat tempBoat = selectedBoat;
+            tempBoat.move(dx * CELL_SIZE, dy * CELL_SIZE);
+            if (tempBoat.checkCollision(otherBoat)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 void handleKeyPress(const sf::Event& event, std::vector<Boat>& boats, int& selectedBoatIndex) {
     switch (event.key.code) {
         case sf::Keyboard::Up:
-            boats[selectedBoatIndex].move(0, -CELL_SIZE);
+            if (!checkCollisionWithOtherBoats(boats, selectedBoatIndex, 0, -1))
+                boats[selectedBoatIndex].move(0, -CELL_SIZE);
             break;
         case sf::Keyboard::Down:
-            boats[selectedBoatIndex].move(0, CELL_SIZE);
+            if (!checkCollisionWithOtherBoats(boats, selectedBoatIndex, 0, 1))
+                boats[selectedBoatIndex].move(0, CELL_SIZE);
             break;
         case sf::Keyboard::Left:
-            boats[selectedBoatIndex].move(-CELL_SIZE, 0);
+            if (!checkCollisionWithOtherBoats(boats, selectedBoatIndex, -1, 0))
+                boats[selectedBoatIndex].move(-CELL_SIZE, 0);
             break;
         case sf::Keyboard::Right:
-            boats[selectedBoatIndex].move(CELL_SIZE, 0);
+            if (!checkCollisionWithOtherBoats(boats, selectedBoatIndex, 1, 0))
+                boats[selectedBoatIndex].move(CELL_SIZE, 0);
             break;
         case sf::Keyboard::Enter:
             if (boats[selectedBoatIndex].isPlaced()) {
